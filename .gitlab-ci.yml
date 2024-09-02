@@ -9,7 +9,7 @@ sync_to_github:
     - apk add --no-cache git curl
     - git config --global user.email "kittuvelagala@gmail.com"
     - git config --global user.name "krishna reddy velagala"
-    - export REPO_NAME=$(basename $CI_PROJECT_PATH)
+    - export REPO_NAME=$(basename $CI_PROJECT_PATH)  # Extracts just the project name (e.g., coursera-deeplearning-specialization)
     - export GITHUB_REPO_URL="https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$REPO_NAME.git"
     - |
       # Check if the GitHub repository exists; if not, create it

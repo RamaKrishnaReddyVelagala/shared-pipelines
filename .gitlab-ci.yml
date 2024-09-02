@@ -15,4 +15,32 @@ sync_to_github:
     - export GITHUB_REPO_URL="https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$REPO_NAME.git"
     - |
       # Check if the GitHub repository exists; if not, create it
-      REPO_CHECK=$(curl -s -o /dev/null -w "%{http_code}
+      REPO_CHECK=$(curl -s -o /dev/null -w "%{http_code}" -u "$GITHUB_USERNAME:$GITHUB_TOKEN" https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME)
+      if [ "$REPO_CHECK" -eq 404 ]; then
+        curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user/repos -d "{\"name\":\"$REPO_NAME\"}"
+        echo "Repository $REPO_NAME created on GitHub."
+        
+        # Set topics for the repository, including the extracted group name
+        RESPONSE=$(curl -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.mercy-preview+json" \
+        -X PUT https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME/topics \
+        -d "{\"names\": [\"$GROUP_NAME\"]}" -w "%{http_code}" -o /dev/null)
+        
+        if [ "$RESPONSE" -eq 200 ]; then
+          echo "Topics set successfully for repository $REPO_NAME."
+        else
+          echo "Failed to set topics for repository $REPO_NAME. Response code: $RESPONSE"
+        fi
+      else
+        echo "Repository $REPO_NAME already exists on GitHub."
+      fi
+    - git remote add github $GITHUB_REPO_URL
+    - git fetch origin  # Fetch branches from origin
+    - git checkout main  # Ensure we are on the main branch
+    - git push github main  # Push the main branch to GitHub
+    - |
+      # Push all other branches to GitHub
+      for branch in $(git branch -r | grep -v '\->' | grep -v 'github/' | sed 's/origin\///'); do
+        git push github $branch
+      done
+  only:
+    - branches  # Run this job for all branches

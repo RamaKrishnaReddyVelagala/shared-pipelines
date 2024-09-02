@@ -13,7 +13,8 @@ sync_to_github:
     - export GITHUB_REPO_URL="https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$REPO_NAME.git"
     - |
       # Check if the GitHub repository exists; if not, create it
-      if curl -s -o /dev/null -w "%{http_code}" -u "$GITHUB_USERNAME:$GITHUB_TOKEN" https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME | grep -q "404"; then
+      REPO_CHECK=$(curl -s -o /dev/null -w "%{http_code}" -u "$GITHUB_USERNAME:$GITHUB_TOKEN" https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME)
+      if [ "$REPO_CHECK" -eq 404 ]; then
         curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user/repos -d "{\"name\":\"$REPO_NAME\"}"
         echo "Repository $REPO_NAME created on GitHub."
       else

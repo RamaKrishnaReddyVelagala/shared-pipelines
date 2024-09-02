@@ -8,7 +8,7 @@ sync_to_github:
   script:
     - apk add --no-cache git curl
     - git config --global user.email "kittuvelagala@gmail.com"
-    - git config --global user.name "krishna reddy velagala"
+    - git config --global user.name "RamaKrishnaReddyVelagala"
     - export REPO_NAME=$(basename $CI_PROJECT_PATH)
     - export GITHUB_REPO_URL="https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$REPO_NAME.git"
     - |

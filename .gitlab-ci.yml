@@ -1,4 +1,3 @@
-# .gitlab-ci.yml in the shared project
 stages:
   - sync_with_github
 
@@ -6,12 +5,14 @@ sync_to_github:
   stage: sync_with_github
   image: alpine:latest
   script:
+    - set -e  # Exit immediately if a command exits with a non-zero status
     - apk add --no-cache git curl
     - git config --global user.email "kittuvelagala@gmail.com"
-    - git config --global user.name "RamaKrishnaReddyVelagala"
+    - git config --global user.name "krishna reddy velagala"
     - export REPO_NAME=$(basename $CI_PROJECT_PATH)
     - export GITHUB_REPO_URL="https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$REPO_NAME.git"
     - |
+      # Check if the GitHub repository exists; if not, create it
       if curl -s -o /dev/null -w "%{http_code}" -u "$GITHUB_USERNAME:$GITHUB_TOKEN" https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME | grep -q "404"; then
         curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user/repos -d "{\"name\":\"$REPO_NAME\"}"
         echo "Repository $REPO_NAME created on GitHub."
@@ -19,10 +20,13 @@ sync_to_github:
         echo "Repository $REPO_NAME already exists on GitHub."
       fi
     - git remote add github $GITHUB_REPO_URL
-    - git fetch --all
+    - git fetch --all  # Fetch all branches and tags
+    - git checkout main  # Ensure we are on the main branch
+    - git push github main  # Push the main branch to GitHub
     - |
+      # Push all other branches to GitHub
       for branch in $(git branch -r | grep -v '\->' | grep -v 'github/' | sed 's/origin\///'); do
         git push github $branch
       done
   only:
-    - branches
+    - branches  # Run this job for all branches

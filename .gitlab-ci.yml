@@ -9,19 +9,19 @@ sync_to_github:
     - apk add --no-cache git curl
     - git config --global user.email "kittuvelagala@gmail.com"
     - git config --global user.name "krishna reddy velagala"
-    - export REPO_NAME=$CI_PROJECT_PATH  # Use the full path including group and project name
-    - export GITHUB_REPO_URL="https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$REPO_NAME.git"
+    - export REPO_NAME=$(basename $CI_PROJECT_PATH)
+    - export GITHUB_REPO_URL="https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$REPO_NAME.git"
     - |
       # Check if the GitHub repository exists; if not, create it
-      if curl -s -o /dev/null -w "%{http_code}" -u "$GITHUB_USERNAME:$GITHUB_TOKEN" https://api.github.com/repos/$REPO_NAME | grep -q "404"; then
-        curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user/repos -d "{\"name\":\"$(basename $REPO_NAME)\"}"
+      if curl -s -o /dev/null -w "%{http_code}" -u "$GITHUB_USERNAME:$GITHUB_TOKEN" https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME | grep -q "404"; then
+        curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user/repos -d "{\"name\":\"$REPO_NAME\"}"
         echo "Repository $REPO_NAME created on GitHub."
       else
         echo "Repository $REPO_NAME already exists on GitHub."
       fi
     - git remote add github $GITHUB_REPO_URL
-    - git fetch origin  # Fetch branches from origin
-    - git checkout main  # Checkout the main branch
+    - git fetch --all  # Fetch all branches and tags
+    - git checkout main  # Ensure we are on the main branch
     - git push github main  # Push the main branch to GitHub
     - |
       # Push all other branches to GitHub

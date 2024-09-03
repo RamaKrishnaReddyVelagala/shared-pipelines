@@ -11,7 +11,7 @@ sync_to_github:
     - git config --global user.name "krishna reddy velagala"
     - export REPO_NAME=$(basename "$CI_PROJECT_PATH")  # Extract just the project name (e.g., coursera-deeplearning-specialization)
     - export GROUP_NAME=$(dirname "$CI_PROJECT_PATH" | cut -d'/' -f1)  # Extract the group name (e.g., mlengineer)
-    - echo "Group Name extracted: $GROUP_NAME"  # Output the group name for debugging
+    - 'echo "Group Name extracted: $GROUP_NAME"'  # Output the group name for debugging
     - export GITHUB_REPO_URL="https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$REPO_NAME.git"
     - |
       # Fetch the current topics before setting them

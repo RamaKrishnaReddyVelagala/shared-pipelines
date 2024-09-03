@@ -11,9 +11,17 @@ sync_to_github:
     - git config --global user.name "krishna reddy velagala"
     - export REPO_NAME=$(basename "$CI_PROJECT_PATH")  # Extract just the project name (e.g., coursera-deeplearning-specialization)
     - export GROUP_NAME=$(dirname "$CI_PROJECT_PATH" | cut -d'/' -f1)  # Extract the group name (e.g., mlengineer)
-    - 'echo "Group Name extracted: $GROUP_NAME"'  # Output the group name for debugging
+    - echo "Group Name extracted: $GROUP_NAME"  # Output the group name for debugging
     - export GITHUB_REPO_URL="https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$REPO_NAME.git"
     - |
+      # Fetch the current topics before setting them
+      CURRENT_TOPICS_BEFORE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.mercy-preview+json" \
+      -X GET https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME/topics)
+      
+      echo "GitHub API Response for getting topics before update: $CURRENT_TOPICS_BEFORE"  # Output the API response for getting topics before update
+      
+      echo "Current topics before update for repository $REPO_NAME: $(echo $CURRENT_TOPICS_BEFORE | jq -r '.names | join(", ")')"
+      
       # Check if the GitHub repository exists; if not, create it
       REPO_CHECK=$(curl -s -o /dev/null -w "%{http_code}" -u "$GITHUB_USERNAME:$GITHUB_TOKEN" https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME)
       if [ "$REPO_CHECK" -eq 404 ]; then
@@ -25,28 +33,38 @@ sync_to_github:
         -X PUT https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME/topics \
         -d "{\"names\": [\"$GROUP_NAME\"]}")
         
-        echo "GitHub API Response for setting topics: $RESPONSE"  # Output the API response for debugging
+        echo "GitHub API Response for setting topics: $RESPONSE"  # Output the API response for setting topics
         
         if echo "$RESPONSE" | grep -q '"names"'; then
           echo "Topics set successfully for repository $REPO_NAME."
-          
-          # Fetch the current topics to display them
-          CURRENT_TOPICS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.mercy-preview+json" \
-          -X GET https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME/topics)
-          
-          echo "Current topics for repository $REPO_NAME: $(echo $CURRENT_TOPICS | jq -r '.names | join(", ")')"
         else
           echo "Failed to set topics for repository $REPO_NAME. Response: $RESPONSE"
         fi
       else
         echo "Repository $REPO_NAME already exists on GitHub."
         
-        # Fetch the current topics to display them
-        CURRENT_TOPICS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.mercy-preview+json" \
-        -X GET https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME/topics)
+        # Set topics for the repository if it already exists
+        RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.mercy-preview+json" \
+        -X PUT https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME/topics \
+        -d "{\"names\": [\"$GROUP_NAME\"]}")
         
-        echo "Current topics for repository $REPO_NAME: $(echo $CURRENT_TOPICS | jq -r '.names | join(", ")')"
+        echo "GitHub API Response for setting topics: $RESPONSE"  # Output the API response for setting topics
+        
+        if echo "$RESPONSE" | grep -q '"names"'; then
+          echo "Topics set successfully for repository $REPO_NAME."
+        else
+          echo "Failed to set topics for repository $REPO_NAME. Response: $RESPONSE"
+        fi
       fi
+
+      # Fetch the current topics after setting them
+      CURRENT_TOPICS_AFTER=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.mercy-preview+json" \
+      -X GET https://api.github.com/repos/$GITHUB_USERNAME/$REPO_NAME/topics)
+      
+      echo "GitHub API Response for getting topics after update: $CURRENT_TOPICS_AFTER"  # Output the API response for getting topics after update
+      
+      echo "Current topics after update for repository $REPO_NAME: $(echo $CURRENT_TOPICS_AFTER | jq -r '.names | join(", ")')"
+      
     - git remote add github "$GITHUB_REPO_URL"
     - git fetch origin  # Fetch branches from origin
     - git checkout main  # Ensure we are on the main branch
